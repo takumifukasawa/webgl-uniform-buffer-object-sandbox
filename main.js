@@ -1,4 +1,10 @@
-import {createShader, createVertexArrayObjectWrapper, createUniformBufferObjectWrapper} from "./js/webgl-utilities.js";
+//
+// ref:
+// https://gist.github.com/jialiang/2880d4cc3364df117320e8cb324c2880
+// https://wgld.org/d/webgl2/w009.html 
+//
+
+import {createShaderWrapper, createVertexArrayObjectWrapper, createUniformBufferObjectWrapper} from "./js/webgl-utilities.js";
 
 const canvas = document.createElement('canvas');
 
@@ -18,14 +24,19 @@ in vec3 color;
 
 out vec3 vColor;
 
-layout (std140) uniform Data {
-    float time;
-} data;
+// layout (std140) uniform Data {
+//     float time;
+// } uData;
+
+uniform Settings {
+    float uTime;
+};
 
 void main() {
     vColor = color;
     vec3 p = position;
-    p.xy *= (.8 + sin(data.time * 4.) * .2);
+    // p.xy *= (.8 + sin(Data.time * 4.) * .2);
+    p.xy *= (.8 + sin(uTime * 4.) * .2);
     gl_Position = vec4(p, 1.0);
 }
 `;
@@ -43,7 +54,7 @@ void main() {
 }
 `;
 
-const shader = createShader(gl, vertexShaderText, fragmentShaderText);
+const shaderWrapper = createShaderWrapper(gl, vertexShaderText, fragmentShaderText);
 
 const vaoWrapper = createVertexArrayObjectWrapper(gl,
     [
@@ -72,23 +83,73 @@ const vaoWrapper = createVertexArrayObjectWrapper(gl,
     ]
 );
 
-const blockName = "Data";
-const blockIndex = 0;
-
-gl.uniformBlockBinding(
-    shader,
-    gl.getUniformBlockIndex(shader, blockName),
-    blockIndex
+const blockName = "Settings";
+const blockIndex = gl.getUniformBlockIndex(
+    shaderWrapper.program,
+    blockName
 );
+
+// シェーダー内の uniform block の byte数を取得。指定した block を参照する
+const blockSize = gl.getActiveUniformBlockParameter(
+    shaderWrapper.program,
+    blockIndex,
+    gl.UNIFORM_BLOCK_DATA_SIZE
+);
+
+console.log(`blockIndex: ${blockIndex}, blockSize: ${blockSize}`);
 
 const uboWrapper = createUniformBufferObjectWrapper(gl, [
     {
-        data: new Float32Array([0]),
+        data: blockSize,
+        // data: new Float32Array([0]),
         usage: gl.DYNAMIC_DRAW
     }
 ]);
+
+gl.bindBufferBase(gl.UNIFORM_BUFFER, blockIndex, uboWrapper.ubo);
+
+const uboVariableNames = ["uTime"];
+
+const uboVariableIndices = gl.getUniformIndices(
+    shaderWrapper.program,
+    uboVariableNames
+);
+
+console.log(`[uboVariableIndices] ${uboVariableIndices}`);
+
+const uniformCount = gl.getProgramParameter(shaderWrapper.program, gl.ACTIVE_UNIFORMS);
+console.log(`[uniformCount] ${uniformCount}`);
+
+const uboVariableOffsets = gl.getActiveUniforms(
+    shaderWrapper.program,
+    uboVariableIndices,
+    gl.UNIFORM_OFFSET
+);
+
+console.log(`[uboVariableOffsets] ${uboVariableOffsets}`);
+
+const uboVariableInfo = [];
+
+uboVariableNames.forEach((name, index) => {
+    uboVariableInfo.push({
+        name,
+        index: uboVariableIndices[index],
+        offset: uboVariableOffsets[index]
+    });
+});
+
+uboVariableInfo.forEach((info) => {
+    console.log(`[uboVariableInfo] name: ${info.name}, index: ${info.index}, offset: ${info.offset}`);
+});
+
 // uboWrapper.bindBufferBase(0);
 // gl.bindBufferBase(gl.UNIFORM_BUFFER, 0, uboWrapper.ubo);
+
+gl.uniformBlockBinding(
+    shaderWrapper.program,
+    gl.getUniformBlockIndex(shaderWrapper.program, blockName),
+    blockIndex
+);
 
 const tick = (time) => {
 
@@ -96,22 +157,21 @@ const tick = (time) => {
 
     gl.clear(gl.COLOR_BUFFER_BIT);
 
-    gl.useProgram(shader);
+    shaderWrapper.bindProgram();
 
-    gl.bindVertexArray(vaoWrapper.vao);
+    vaoWrapper.bind();
+   
+    uboWrapper.bind();
     
-    gl.bindBuffer(gl.UNIFORM_BUFFER, uboWrapper.ubo);
     gl.bufferSubData(gl.UNIFORM_BUFFER, 0, new Float32Array([time / 1000]));
     // gl.bufferData(gl.UNIFORM_BUFFER, new Float32Array([time / 1000]), gl.DYNAMIC_DRAW);
-    gl.bindBuffer(gl.UNIFORM_BUFFER, null);
-
-    gl.bindBufferBase(gl.UNIFORM_BUFFER, blockIndex, uboWrapper.ubo);
-
+    uboWrapper.unbind();
+    
     gl.drawArrays(gl.TRIANGLES, 0, 3);
 
-    gl.bindVertexArray(null);
+    vaoWrapper.unbind();
 
-    gl.useProgram(null);
+    shaderWrapper.unbindProgram();
     
     window.requestAnimationFrame(tick);
 }

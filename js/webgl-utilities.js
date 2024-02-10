@@ -8,7 +8,7 @@
  * @param transformFeedbackVaryings
  * @returns {WebGLProgram}
  */
-export function createShader(gl, vertexShader, fragmentShader, transformFeedbackVaryings) {
+export function createShaderWrapper(gl, vertexShader, fragmentShader, transformFeedbackVaryings) {
     const buildErrorInfo = (infoLog, shaderSource, header) => {
         return `${header}
             
@@ -84,8 +84,20 @@ ${shaderSource.split("\n").map((line, i) => {
     if (programInfo.length > 0) {
         throw programInfo;
     }
+    
+    const bindProgram = () => {
+        gl.useProgram(program);
+    }
+    
+    const unbindProgram = () => {
+        gl.useProgram(null);
+    }
 
-    return program;
+    return {
+        program,
+        bindProgram,
+        unbindProgram
+    }
 }
 
 /**
@@ -128,7 +140,13 @@ export function createVertexArrayObjectWrapper(gl, attributes, indicesData) {
     // divisor
     const vertices = [];
 
-    gl.bindVertexArray(vao);
+    const bind = () => {
+        gl.bindVertexArray(vao);
+    }
+    
+    const unbind = () => {
+        gl.bindVertexArray(null);
+    }
 
     const getBuffers = () => {
         return vertices.map(({vbo}) => vbo);
@@ -151,6 +169,9 @@ export function createVertexArrayObjectWrapper(gl, attributes, indicesData) {
     const findBuffer = (name) => {
         return vertices.find(elem => elem.name === name).vbo;
     }
+
+    // gl.bindVertexArray(vao);
+    bind();
 
     attributes.forEach(attribute => {
         const {name, data, size, location, divisor, usage} = attribute;
@@ -192,7 +213,8 @@ export function createVertexArrayObjectWrapper(gl, attributes, indicesData) {
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
     // unbind vertex array to webgl context
-    gl.bindVertexArray(null);
+    // gl.bindVertexArray(null);
+    unbind();
 
     // unbind index buffer
     if (ibo) {
@@ -202,6 +224,8 @@ export function createVertexArrayObjectWrapper(gl, attributes, indicesData) {
     return {
         vao,
         indices,
+        bind,
+        unbind,
         getBuffers,
         setBuffer,
         findBuffer
@@ -210,25 +234,35 @@ export function createVertexArrayObjectWrapper(gl, attributes, indicesData) {
 
 export function createUniformBufferObjectWrapper(gl, uniforms, blockIndex = -1) {
     const ubo = gl.createBuffer();
-    gl.bindBuffer(gl.UNIFORM_BUFFER, ubo);
-    
+
+    const bind = () => {
+        gl.bindBuffer(gl.UNIFORM_BUFFER, ubo);
+    }
+
+    const unbind = () => {
+        gl.bindBuffer(gl.UNIFORM_BUFFER, null);
+    }
+
     // const bindBufferBase = (index) => {
     //     gl.bindBufferBase(gl.UNIFORM_BUFFER, index, ubo);
     // }
-    
+
     // const bindData = (uniform, index) => {
     //     const {data, usage} = uniform;
     //     gl.bufferData(gl.UNIFORM_BUFFER, data, usage);
     //     // gl.bindBufferBase(gl.UNIFORM_BUFFER, index, ubo);
     // }
 
+    bind();
+
     uniforms.forEach((uniform, index) => {
         const {data, usage} = uniform;
+        // gl.bufferData(gl.UNIFORM_BUFFER, data, usage);
         gl.bufferData(gl.UNIFORM_BUFFER, data, usage);
         // gl.bindBufferBase(gl.UNIFORM_BUFFER, index, ubo);
     });
 
-    gl.bindBuffer(gl.UNIFORM_BUFFER, null);
+    unbind();
 
     // if (blockIndex > -1) {
     //     // gl.bindBufferBase(gl.UNIFORM_BUFFER, blockIndex, ubo);
@@ -237,6 +271,8 @@ export function createUniformBufferObjectWrapper(gl, uniforms, blockIndex = -1) 
 
     return {
         ubo,
+        bind,
+        unbind
         // bindBufferBase
     };
 }
