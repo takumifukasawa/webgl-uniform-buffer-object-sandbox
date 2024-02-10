@@ -232,9 +232,68 @@ export function createVertexArrayObjectWrapper(gl, attributes, indicesData) {
     }
 }
 
-export function createUniformBufferObjectWrapper(gl, size, blockIndex = -1) {
+export function createUniformBufferObjectWrapper(
+    gl,
+    program,
+    blockName,
+    variableNames
+) {
     const ubo = gl.createBuffer();
 
+    // シェーダー内の uniform buffer の index を取得
+    // 記述順によって決まることに注意
+    const blockIndex = gl.getUniformBlockIndex(
+        program,
+        blockName
+    );
+
+    // シェーダー内の uniform block の byte数を取得。指定した block を参照する
+    const blockSize = gl.getActiveUniformBlockParameter(
+        program,
+        blockIndex,
+        gl.UNIFORM_BLOCK_DATA_SIZE
+    );
+
+    gl.bindBufferBase(gl.UNIFORM_BUFFER, blockIndex, ubo);
+    
+    console.log(`[blockIndex] ${blockIndex}, [blockSize] ${blockSize}`);
+
+    const variableIndices = gl.getUniformIndices(
+        program,
+        variableNames
+    );
+    
+    console.log(`[variableIndices] ${variableIndices}`);
+
+    // シェーダー内の uniform の offset(byte) を取得
+    // wip: 2つめの uniform buffer の最初の要素は 0?
+    // TODO: ずれるoffset量と型の関係が不明
+    const variableOffsets = gl.getActiveUniforms(
+        program,
+        variableIndices,
+        gl.UNIFORM_OFFSET
+    );
+    
+    console.log(`[variableOffsets] ${variableOffsets}`);
+    
+    const variableInfo = variableNames.map((name, i) => {
+        const index = variableIndices[i];
+        const offset = variableOffsets[i];
+        console.log(`[uboWrapper] name: ${name}, index: ${index}, offset: ${offset}`);
+        return {
+            name,
+            index: variableIndices[i],
+            offset: variableOffsets[i]
+        }
+    });
+
+    // TODO: 第三引数の意味がよくわかってない
+    gl.uniformBlockBinding(
+        program,
+        blockIndex,
+        0
+    );
+    
     const bind = () => {
         gl.bindBuffer(gl.UNIFORM_BUFFER, ubo);
     }
@@ -243,7 +302,9 @@ export function createUniformBufferObjectWrapper(gl, size, blockIndex = -1) {
         gl.bindBuffer(gl.UNIFORM_BUFFER, null);
     }
     
-    const setData = () => {
+    const setData = (name, data) => {
+        const offset = variableInfo.find(info => info.name === name).offset;
+        gl.bufferSubData(gl.UNIFORM_BUFFER, offset, data);
     }
 
     // const bindBufferBase = (index) => {
@@ -266,7 +327,7 @@ export function createUniformBufferObjectWrapper(gl, size, blockIndex = -1) {
     // });
    
     // 必要なbyte数を確保しておく 
-    gl.bufferData(gl.UNIFORM_BUFFER, size, gl.DYNAMIC_DRAW);
+    gl.bufferData(gl.UNIFORM_BUFFER, blockSize, gl.DYNAMIC_DRAW);
 
     unbind();
 
@@ -278,7 +339,8 @@ export function createUniformBufferObjectWrapper(gl, size, blockIndex = -1) {
     return {
         ubo,
         bind,
-        unbind
+        unbind,
+        setData
         // bindBufferBase
     };
 }

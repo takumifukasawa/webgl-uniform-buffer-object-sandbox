@@ -95,87 +95,14 @@ const vaoWrapper = createVertexArrayObjectWrapper(gl,
     ]
 );
 
-const blockName = "Settings";
-
-// シェーダー内の uniform buffer の index を取得
-// 記述順によって決まることに注意
-const blockIndex = gl.getUniformBlockIndex(
+const uboWrapper = createUniformBufferObjectWrapper(
+    gl,
     shaderWrapper.program,
-    blockName
-);
-
-// シェーダー内の uniform block の byte数を取得。指定した block を参照する
-const blockSize = gl.getActiveUniformBlockParameter(
-    shaderWrapper.program,
-    blockIndex,
-    gl.UNIFORM_BLOCK_DATA_SIZE
-);
-
-console.log(`[blockIndex] ${blockIndex}, [blockSize] ${blockSize}`);
-
-// const uboWrapper = createUniformBufferObjectWrapper(gl, [
-//     {
-//         data: blockSize,
-//         // data: new Float32Array([0]),
-//         usage: gl.DYNAMIC_DRAW
-//     }
-// ]);
-
-const uboWrapper = createUniformBufferObjectWrapper(gl, blockSize);
-
-gl.bindBufferBase(gl.UNIFORM_BUFFER, blockIndex, uboWrapper.ubo);
-
-const uboVariableNames = ["uTime", "uOffset"];
-
-console.log(`[uboVariableNames] ${uboVariableNames}`);
-
-const uboVariableIndices = gl.getUniformIndices(
-    shaderWrapper.program,
-    uboVariableNames
-);
-
-console.log(`[uboVariableIndices] ${uboVariableIndices}`);
-
-const uniformCount = gl.getProgramParameter(shaderWrapper.program, gl.ACTIVE_UNIFORMS);
-console.log(`[uniformCount] ${uniformCount}`);
-
-// シェーダー内の uniform の offset(byte) を取得
-// wip: 2つめの uniform buffer の最初の要素は 0?
-// TODO: ずれるoffset量と型の関係が不明
-const uboVariableOffsets = gl.getActiveUniforms(
-    shaderWrapper.program,
-    uboVariableIndices,
-    gl.UNIFORM_OFFSET
-);
-
-console.log(`[uboVariableOffsets] ${uboVariableOffsets}`);
-
-const uboVariableInfo = [];
-
-uboVariableNames.forEach((name, index) => {
-    uboVariableInfo.push({
-        name,
-        index: uboVariableIndices[index],
-        offset: uboVariableOffsets[index]
-    });
-});
-
-uboVariableInfo.forEach((info) => {
-    console.log(`[uboVariableInfo] name: ${info.name}, index: ${info.index}, offset: ${info.offset}`);
-});
-
-// uboWrapper.bindBufferBase(0);
-// gl.bindBufferBase(gl.UNIFORM_BUFFER, 0, uboWrapper.ubo);
-
-gl.uniformBlockBinding(
-    shaderWrapper.program,
-    // gl.getUniformBlockIndex(shaderWrapper.program, blockName),
-    blockIndex,
-    0
+    "Settings",
+    ["uTime", "uOffset"]
 );
 
 const tick = (time) => {
-
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
 
     gl.clear(gl.COLOR_BUFFER_BIT);
@@ -186,20 +113,13 @@ const tick = (time) => {
 
     uboWrapper.bind();
 
-    gl.bufferSubData(
-        gl.UNIFORM_BUFFER,
-        uboVariableInfo[0].offset,
-        new Float32Array([time / 1000])
-    );
-    gl.bufferSubData(
-        gl.UNIFORM_BUFFER,
-        uboVariableInfo[1].offset,
-        new Float32Array([
-            Math.cos(time / 1000) * .4,
-            Math.sin(time / 1000) * .4
-        ])
-    );
-    // gl.bufferData(gl.UNIFORM_BUFFER, new Float32Array([time / 1000]), gl.DYNAMIC_DRAW);
+    uboWrapper.setData("uTime", new Float32Array([time / 1000]));
+    uboWrapper.setData("uOffset", new Float32Array([
+        Math.cos(time / 1000) * .4,
+        Math.sin(time / 1000) * .4
+    ]));
+    
+    // draw する前に unbindして OK 
     uboWrapper.unbind();
 
     gl.drawArrays(gl.TRIANGLES, 0, 3);
