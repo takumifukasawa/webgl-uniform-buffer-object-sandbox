@@ -141,7 +141,7 @@ console.log(`[uniformCount] ${uniformCount}`);
 
 // シェーダー内の uniform の offset(byte) を取得
 // wip: 2つめの uniform buffer の最初の要素は 0?
-// また、floatなら必ず16byte分（vec4分）offsetがずれる？
+// TODO: ずれるoffset量と型の関係が不明
 const uboVariableOffsets = gl.getActiveUniforms(
     shaderWrapper.program,
     uboVariableIndices,
