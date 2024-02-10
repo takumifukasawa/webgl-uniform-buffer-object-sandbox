@@ -232,7 +232,7 @@ export function createVertexArrayObjectWrapper(gl, attributes, indicesData) {
     }
 }
 
-export function createUniformBufferObjectWrapper(gl, uniforms, blockIndex = -1) {
+export function createUniformBufferObjectWrapper(gl, size, blockIndex = -1) {
     const ubo = gl.createBuffer();
 
     const bind = () => {
@@ -241,6 +241,9 @@ export function createUniformBufferObjectWrapper(gl, uniforms, blockIndex = -1) 
 
     const unbind = () => {
         gl.bindBuffer(gl.UNIFORM_BUFFER, null);
+    }
+    
+    const setData = () => {
     }
 
     // const bindBufferBase = (index) => {
@@ -255,12 +258,15 @@ export function createUniformBufferObjectWrapper(gl, uniforms, blockIndex = -1) 
 
     bind();
 
-    uniforms.forEach((uniform, index) => {
-        const {data, usage} = uniform;
-        // gl.bufferData(gl.UNIFORM_BUFFER, data, usage);
-        gl.bufferData(gl.UNIFORM_BUFFER, data, usage);
-        // gl.bindBufferBase(gl.UNIFORM_BUFFER, index, ubo);
-    });
+    // uniforms.forEach((uniform, index) => {
+    //     const {data, usage} = uniform;
+    //     // gl.bufferData(gl.UNIFORM_BUFFER, data, usage);
+    //     gl.bufferData(gl.UNIFORM_BUFFER, data, usage);
+    //     // gl.bindBufferBase(gl.UNIFORM_BUFFER, index, ubo);
+    // });
+   
+    // 必要なbyte数を確保しておく 
+    gl.bufferData(gl.UNIFORM_BUFFER, size, gl.DYNAMIC_DRAW);
 
     unbind();
 

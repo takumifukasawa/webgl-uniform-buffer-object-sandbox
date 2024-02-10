@@ -4,7 +4,11 @@
 // https://wgld.org/d/webgl2/w009.html 
 //
 
-import {createShaderWrapper, createVertexArrayObjectWrapper, createUniformBufferObjectWrapper} from "./js/webgl-utilities.js";
+import {
+    createShaderWrapper,
+    createVertexArrayObjectWrapper,
+    createUniformBufferObjectWrapper
+} from "./js/webgl-utilities.js";
 
 const canvas = document.createElement('canvas');
 
@@ -30,13 +34,21 @@ out vec3 vColor;
 
 uniform Settings {
     float uTime;
+    vec2 uOffset;
 };
+
+uniform Data {
+    float uData;
+};
+
+uniform float uHoge;
 
 void main() {
     vColor = color;
     vec3 p = position;
     // p.xy *= (.8 + sin(Data.time * 4.) * .2);
-    p.xy *= (.8 + sin(uTime * 4.) * .2);
+    p.xy *= (.8 + sin(uTime * 2.) * .2);
+    p.xy += uOffset.xy;
     gl_Position = vec4(p, 1.0);
 }
 `;
@@ -84,6 +96,9 @@ const vaoWrapper = createVertexArrayObjectWrapper(gl,
 );
 
 const blockName = "Settings";
+
+// シェーダー内の uniform buffer の index を取得
+// 記述順によって決まることに注意
 const blockIndex = gl.getUniformBlockIndex(
     shaderWrapper.program,
     blockName
@@ -96,19 +111,23 @@ const blockSize = gl.getActiveUniformBlockParameter(
     gl.UNIFORM_BLOCK_DATA_SIZE
 );
 
-console.log(`blockIndex: ${blockIndex}, blockSize: ${blockSize}`);
+console.log(`[blockIndex] ${blockIndex}, [blockSize] ${blockSize}`);
 
-const uboWrapper = createUniformBufferObjectWrapper(gl, [
-    {
-        data: blockSize,
-        // data: new Float32Array([0]),
-        usage: gl.DYNAMIC_DRAW
-    }
-]);
+// const uboWrapper = createUniformBufferObjectWrapper(gl, [
+//     {
+//         data: blockSize,
+//         // data: new Float32Array([0]),
+//         usage: gl.DYNAMIC_DRAW
+//     }
+// ]);
+
+const uboWrapper = createUniformBufferObjectWrapper(gl, blockSize);
 
 gl.bindBufferBase(gl.UNIFORM_BUFFER, blockIndex, uboWrapper.ubo);
 
-const uboVariableNames = ["uTime"];
+const uboVariableNames = ["uTime", "uOffset"];
+
+console.log(`[uboVariableNames] ${uboVariableNames}`);
 
 const uboVariableIndices = gl.getUniformIndices(
     shaderWrapper.program,
@@ -120,6 +139,9 @@ console.log(`[uboVariableIndices] ${uboVariableIndices}`);
 const uniformCount = gl.getProgramParameter(shaderWrapper.program, gl.ACTIVE_UNIFORMS);
 console.log(`[uniformCount] ${uniformCount}`);
 
+// シェーダー内の uniform の offset(byte) を取得
+// wip: 2つめの uniform buffer の最初の要素は 0?
+// また、floatなら必ず16byte分（vec4分）offsetがずれる？
 const uboVariableOffsets = gl.getActiveUniforms(
     shaderWrapper.program,
     uboVariableIndices,
@@ -147,8 +169,9 @@ uboVariableInfo.forEach((info) => {
 
 gl.uniformBlockBinding(
     shaderWrapper.program,
-    gl.getUniformBlockIndex(shaderWrapper.program, blockName),
-    blockIndex
+    // gl.getUniformBlockIndex(shaderWrapper.program, blockName),
+    blockIndex,
+    0
 );
 
 const tick = (time) => {
@@ -160,19 +183,31 @@ const tick = (time) => {
     shaderWrapper.bindProgram();
 
     vaoWrapper.bind();
-   
+
     uboWrapper.bind();
-    
-    gl.bufferSubData(gl.UNIFORM_BUFFER, 0, new Float32Array([time / 1000]));
+
+    gl.bufferSubData(
+        gl.UNIFORM_BUFFER,
+        uboVariableInfo[0].offset,
+        new Float32Array([time / 1000])
+    );
+    gl.bufferSubData(
+        gl.UNIFORM_BUFFER,
+        uboVariableInfo[1].offset,
+        new Float32Array([
+            Math.cos(time / 1000) * .4,
+            Math.sin(time / 1000) * .4
+        ])
+    );
     // gl.bufferData(gl.UNIFORM_BUFFER, new Float32Array([time / 1000]), gl.DYNAMIC_DRAW);
     uboWrapper.unbind();
-    
+
     gl.drawArrays(gl.TRIANGLES, 0, 3);
 
     vaoWrapper.unbind();
 
     shaderWrapper.unbindProgram();
-    
+
     window.requestAnimationFrame(tick);
 }
 window.requestAnimationFrame(tick);
