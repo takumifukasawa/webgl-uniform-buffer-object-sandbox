@@ -1,4 +1,4 @@
-import {createShader, createVertexArrayObjectWrapper} from "./js/webgl-utilities.js";
+import {createShader, createVertexArrayObjectWrapper, createUniformBufferObjectWrapper} from "./js/webgl-utilities.js";
 
 const canvas = document.createElement('canvas');
 
@@ -18,9 +18,15 @@ in vec3 color;
 
 out vec3 vColor;
 
+layout (std140) uniform Data {
+    float time;
+} data;
+
 void main() {
     vColor = color;
-    gl_Position = vec4(position, 1.0);
+    vec3 p = position;
+    p.xy *= (.8 + sin(data.time * 4.) * .2);
+    gl_Position = vec4(p, 1.0);
 }
 `;
 
@@ -66,18 +72,47 @@ const vaoWrapper = createVertexArrayObjectWrapper(gl,
     ]
 );
 
-gl.clearColor(0.0, 0.0, 0.0, 1.0);
+const blockName = "Data";
+const blockIndex = 0;
 
-gl.clear(gl.COLOR_BUFFER_BIT);
+gl.uniformBlockBinding(
+    shader,
+    gl.getUniformBlockIndex(shader, blockName),
+    blockIndex
+);
 
-gl.useProgram(shader);
+const uboWrapper = createUniformBufferObjectWrapper(gl, [
+    {
+        data: new Float32Array([0]),
+        usage: gl.DYNAMIC_DRAW
+    }
+]);
+// uboWrapper.bindBufferBase(0);
+// gl.bindBufferBase(gl.UNIFORM_BUFFER, 0, uboWrapper.ubo);
 
-gl.bindVertexArray(vaoWrapper.vao);
+const tick = (time) => {
 
-gl.drawArrays(gl.TRIANGLES, 0, 3);
+    gl.clearColor(0.0, 0.0, 0.0, 1.0);
 
-gl.bindVertexArray(null);
+    gl.clear(gl.COLOR_BUFFER_BIT);
 
-gl.useProgram(null);
+    gl.useProgram(shader);
 
-console.log('done');
+    gl.bindVertexArray(vaoWrapper.vao);
+    
+    gl.bindBuffer(gl.UNIFORM_BUFFER, uboWrapper.ubo);
+    gl.bufferSubData(gl.UNIFORM_BUFFER, 0, new Float32Array([time / 1000]));
+    // gl.bufferData(gl.UNIFORM_BUFFER, new Float32Array([time / 1000]), gl.DYNAMIC_DRAW);
+    gl.bindBuffer(gl.UNIFORM_BUFFER, null);
+
+    gl.bindBufferBase(gl.UNIFORM_BUFFER, blockIndex, uboWrapper.ubo);
+
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+    gl.bindVertexArray(null);
+
+    gl.useProgram(null);
+    
+    window.requestAnimationFrame(tick);
+}
+window.requestAnimationFrame(tick);

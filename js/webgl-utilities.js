@@ -1,7 +1,7 @@
 // --------------------------------------------------------------------
 
 /**
- * 
+ *
  * @param gl
  * @param vertexShader
  * @param fragmentShader
@@ -89,7 +89,7 @@ ${shaderSource.split("\n").map((line, i) => {
 }
 
 /**
- * 
+ *
  * @param gl
  * @param buffers
  * @returns {WebGLTransformFeedback}
@@ -109,7 +109,7 @@ export function createTransformFeedback(gl, buffers) {
 }
 
 /**
- * 
+ *
  * @param gl
  * @param attributes
  * @param indicesData
@@ -206,4 +206,37 @@ export function createVertexArrayObjectWrapper(gl, attributes, indicesData) {
         setBuffer,
         findBuffer
     }
+}
+
+export function createUniformBufferObjectWrapper(gl, uniforms, blockIndex = -1) {
+    const ubo = gl.createBuffer();
+    gl.bindBuffer(gl.UNIFORM_BUFFER, ubo);
+    
+    // const bindBufferBase = (index) => {
+    //     gl.bindBufferBase(gl.UNIFORM_BUFFER, index, ubo);
+    // }
+    
+    // const bindData = (uniform, index) => {
+    //     const {data, usage} = uniform;
+    //     gl.bufferData(gl.UNIFORM_BUFFER, data, usage);
+    //     // gl.bindBufferBase(gl.UNIFORM_BUFFER, index, ubo);
+    // }
+
+    uniforms.forEach((uniform, index) => {
+        const {data, usage} = uniform;
+        gl.bufferData(gl.UNIFORM_BUFFER, data, usage);
+        // gl.bindBufferBase(gl.UNIFORM_BUFFER, index, ubo);
+    });
+
+    gl.bindBuffer(gl.UNIFORM_BUFFER, null);
+
+    // if (blockIndex > -1) {
+    //     // gl.bindBufferBase(gl.UNIFORM_BUFFER, blockIndex, ubo);
+    //     bindBufferBase(blockIndex);
+    // }
+
+    return {
+        ubo,
+        // bindBufferBase
+    };
 }
