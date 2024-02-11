@@ -237,7 +237,7 @@ export function createUniformBufferObjectWrapper(
     // program,
     // blockName,
     // blockIndex,
-    dataSize,
+    // dataSize,
     // variableNames,
     // bindingPoint
 ) {
@@ -337,7 +337,7 @@ export function createUniformBufferObjectWrapper(
     // });
    
     // 必要なbyte数を確保しておく 
-    gl.bufferData(gl.UNIFORM_BUFFER, dataSize, gl.DYNAMIC_DRAW);
+    // gl.bufferData(gl.UNIFORM_BUFFER, dataSize, gl.DYNAMIC_DRAW);
 
     unbind();
 
