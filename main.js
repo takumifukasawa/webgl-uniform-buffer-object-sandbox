@@ -85,14 +85,16 @@ out vec3 vColor;
 //     float time;
 // } uData;
 
+uniform Surface {
+    vec3 uColor;
+};
+
+
 uniform Engine {
     float uTime;
     vec2 uOffset;
 };
 
-uniform Surface {
-    vec3 uColor;
-};
 
 void main() {
     vColor = color;
@@ -306,6 +308,8 @@ const variableIndicesSurfaceWithTriangle2 = gl.getUniformIndices(
 
 console.log(`variableIndicesEngineWithTriangle1: ${variableIndicesEngineWithTriangle1}`);
 console.log(`variableIndicesSurfaceWithTriangle1: ${variableIndicesSurfaceWithTriangle1}`);
+console.log(`variableIndicesEngineWithTriangle2: ${variableIndicesEngineWithTriangle2}`);
+console.log(`variableIndicesSurfaceWithTriangle2: ${variableIndicesSurfaceWithTriangle2}`);
 
 // シェーダー内の uniform の offset(byte) を取得
 // wip: 2つめの uniform buffer の最初の要素は 0?
@@ -327,13 +331,13 @@ const variableOffsetsSurfaceWithTriangle1 = gl.getActiveUniforms(
 
 const variableOffsetsEngineWithTriangle2 = gl.getActiveUniforms(
     shaderWrapperTriangle2.program,
-    variableIndicesEngineWithTriangle1,
+    variableIndicesEngineWithTriangle2,
     gl.UNIFORM_OFFSET
 );
 
 const variableOffsetsSurfaceWithTriangle2 = gl.getActiveUniforms(
     shaderWrapperTriangle2.program,
-    variableIndicesSurfaceWithTriangle1,
+    variableIndicesSurfaceWithTriangle2,
     gl.UNIFORM_OFFSET
 );
 
@@ -348,7 +352,7 @@ const variableInfoEngineWithTriangle1 = variableNamesEngine.map((name, i) => {
     console.log(`variableInfoEngineWithTriangle1 - name: ${name}, index: ${index}, offset: ${offset}`);
     return {
         name,
-        index: variableIndicesEngineWithTriangle1[i],
+        // index: variableIndicesEngineWithTriangle1[i],
         offset: variableOffsetsEngineWithTriangle1[i]
     }
 });
@@ -359,7 +363,7 @@ const variableInfoSurfaceWithTriangle1 = variableNamesSurface.map((name, i) => {
     console.log(`variableInfoSurfaceWithTriangle1 - name: ${name}, index: ${index}, offset: ${offset}`);
     return {
         name,
-        index: variableIndicesSurfaceWithTriangle1[i],
+        // index: variableIndicesSurfaceWithTriangle1[i],
         offset: variableOffsetsSurfaceWithTriangle1[i]
     }
 });
@@ -370,7 +374,7 @@ const variableInfoEngineWithTriangle2 = variableNamesEngine.map((name, i) => {
     console.log(`variableInfoEngineWithTriangle2 - name: ${name}, index: ${index}, offset: ${offset}`);
     return {
         name,
-        index: variableIndicesEngineWithTriangle2[i],
+        // index: variableIndicesEngineWithTriangle2[i],
         offset: variableOffsetsEngineWithTriangle2[i]
     }
 });
@@ -381,7 +385,7 @@ const variableInfoSurfaceWithTriangle2 = variableNamesSurface.map((name, i) => {
     console.log(`variableInfoSurfaceWithTriangle2 - name: ${name}, index: ${index}, offset: ${offset}`);
     return {
         name,
-        index: variableIndicesSurfaceWithTriangle2[i],
+        // index: variableIndicesSurfaceWithTriangle2[i],
         offset: variableOffsetsSurfaceWithTriangle2[i]
     }
 });
@@ -396,6 +400,18 @@ gl.uniformBlockBinding(
     shaderWrapperTriangle1.program,
     blockIndexSurfaceWithTriangle1,
     1 // binding point: webgl context で管理する global な index
+);
+
+gl.uniformBlockBinding(
+    shaderWrapperTriangle2.program,
+    blockIndexEngineWithTriangle2,
+    1 // binding point: webgl context で管理する global な index
+);
+
+gl.uniformBlockBinding(
+    shaderWrapperTriangle2.program,
+    blockIndexSurfaceWithTriangle2,
+    0 // binding point: webgl context で管理する global な index
 );
 
 
