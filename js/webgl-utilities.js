@@ -307,15 +307,15 @@ export function createUniformBufferObjectWrapper(
         gl.bindBuffer(gl.UNIFORM_BUFFER, null);
     }
     
-    const setData = (name, data) => {
-        const info = variableInfo.find(info => info.name === name);
-        if(!info) {
-            console.error(`[createUniformBufferObjectWrapper] setData: not found variable name: ${name}`);
-            return;
-        }
-        //gl.bufferSubData(gl.UNIFORM_BUFFER, info.offset, data);
-        gl.bufferSubData(gl.UNIFORM_BUFFER, info.offset, data, 0);
-    }
+    // const setData = (name, data) => {
+    //     const info = variableInfo.find(info => info.name === name);
+    //     if(!info) {
+    //         console.error(`[createUniformBufferObjectWrapper] setData: not found variable name: ${name}`);
+    //         return;
+    //     }
+    //     //gl.bufferSubData(gl.UNIFORM_BUFFER, info.offset, data);
+    //     gl.bufferSubData(gl.UNIFORM_BUFFER, info.offset, data, 0);
+    // }
 
     // const bindBufferBase = (index) => {
     //     gl.bindBufferBase(gl.UNIFORM_BUFFER, index, ubo);
@@ -350,9 +350,9 @@ export function createUniformBufferObjectWrapper(
         ubo,
         bind,
         unbind,
-        setData,
-        blockIndex,
-        blockSize
+        // setData,
+        // blockIndex,
+        // blockSize
         // bindBufferBase
     };
 }

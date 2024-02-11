@@ -25,7 +25,7 @@ if (!gl) {
     console.error('WebGL2 is not supported in your browser');
 }
 
-const vertexShaderText = `#version 300 es
+const vertexShaderTextTriangle = `#version 300 es
 
 in vec3 position;
 in vec3 color;
@@ -36,7 +36,7 @@ out vec3 vColor;
 //     float time;
 // } uData;
 
-uniform Settings {
+uniform Engine {
     float uTime;
     vec2 uOffset;
 };
@@ -55,7 +55,7 @@ void main() {
 }
 `;
 
-const fragmentShaderText = `#version 300 es
+const fragmentShaderTextTriangle1 = `#version 300 es
 
 precision highp float;
 
@@ -73,9 +73,58 @@ void main() {
 }
 `;
 
-const triangleShaderWrapper = createShaderWrapper(gl, vertexShaderText, fragmentShaderText);
 
-const triangleVaoWrapper = createVertexArrayObjectWrapper(gl,
+const triangle2VertexShaderText = `#version 300 es
+
+in vec3 position;
+in vec3 color;
+
+out vec3 vColor;
+
+// layout (std140) uniform Data {
+//     float time;
+// } uData;
+
+uniform Engine {
+    float uTime;
+    vec2 uOffset;
+};
+
+uniform Surface {
+    vec3 uColor;
+};
+
+void main() {
+    vColor = color;
+    vec3 p = position;
+    // p.xy *= (.8 + sin(Data.time * 4.) * .2);
+    p.xy *= (.8 + sin(uTime * 2.) * .2);
+    p.xy += uOffset.xy;
+    gl_Position = vec4(p, 1.0);
+}
+`;
+
+const fragmentShaderTextTriangle2 = `#version 300 es
+
+precision highp float;
+
+in vec3 vColor;
+
+out vec4 color;
+
+uniform Surface {
+    vec3 uColor;
+};
+
+void main() {
+    color = vec4(vColor, 1.0);
+    // color = vec4(uColor, 1.0);
+}
+`;
+
+const shaderWrapperTriangle1 = createShaderWrapper(gl, vertexShaderTextTriangle, fragmentShaderTextTriangle1);
+
+const vaoWrapperTriangle1 = createVertexArrayObjectWrapper(gl,
     [
         // position
         {
@@ -102,54 +151,83 @@ const triangleVaoWrapper = createVertexArrayObjectWrapper(gl,
     ]
 );
 
-const blockName1 = "Settings";
-const blockName2 = "Surface";
+const triangle2ShaderWrapper = createShaderWrapper(gl, triangle2VertexShaderText, fragmentShaderTextTriangle2);
+
+const triangle2VaoWrapper = createVertexArrayObjectWrapper(gl,
+    [
+        // position
+        {
+            data: new Float32Array([
+                -0.5, 0.5, 0.0,
+                0.5, 0.5, 0.0,
+                0.0, -0.5, 0.0
+            ]),
+            location: 0,
+            size: 3,
+            usage: gl.STATIC_DRAW
+        },
+        // color
+        {
+            data: new Float32Array([
+                1.0, 0.0, 0.0,
+                0.0, 1.0, 0.0,
+                0.0, 0.0, 1.0
+            ]),
+            location: 1,
+            size: 3,
+            usage: gl.STATIC_DRAW
+        }
+    ]
+);
+
+const blockNameEngine = "Engine";
+const blockNameSurface = "Surface";
 
 // シェーダー内の uniform buffer の index を取得
 // 記述順によって決まる？
-const blockIndex1 = gl.getUniformBlockIndex(
-    triangleShaderWrapper.program,
-    blockName1
+const blockIndexEngineWithTriangle1 = gl.getUniformBlockIndex(
+    shaderWrapperTriangle1.program,
+    blockNameEngine
 );
 
 
 // シェーダー内の uniform buffer の index を取得
 // 記述順によって決まる？
-const blockIndex2 = gl.getUniformBlockIndex(
-    triangleShaderWrapper.program,
-    blockName2
+const blockIndexSurfaceWithTriangle1 = gl.getUniformBlockIndex(
+    shaderWrapperTriangle1.program,
+    blockNameSurface
 );
 
 
 // シェーダー内の uniform block の byte数を取得。指定した block を参照する
-const blockSize1 = gl.getActiveUniformBlockParameter(
-    triangleShaderWrapper.program,
-    blockIndex1,
+const blockSizeEngineWithTriangle1 = gl.getActiveUniformBlockParameter(
+    shaderWrapperTriangle1.program,
+    blockIndexEngineWithTriangle1,
     gl.UNIFORM_BLOCK_DATA_SIZE
 );
 
 // シェーダー内の uniform block の byte数を取得。指定した block を参照する
-const blockSize2 = gl.getActiveUniformBlockParameter(
-    triangleShaderWrapper.program,
-    blockIndex2,
+const blockSizeSurfaceWithTriangle1 = gl.getActiveUniformBlockParameter(
+    shaderWrapperTriangle1.program,
+    blockIndexSurfaceWithTriangle1,
     gl.UNIFORM_BLOCK_DATA_SIZE
 );
 
-const uboWrapperSettings = createUniformBufferObjectWrapper(
+const uboWrapperEngine = createUniformBufferObjectWrapper(
     gl,
-    blockIndex1,
-    blockSize1
-    // triangleShaderWrapper.program,
-    // "Settings",
+    blockIndexEngineWithTriangle1,
+    blockSizeEngineWithTriangle1
+    // shaderWrapperTriangle1.program,
+    // "Engine",
     // ["uTime", "uOffset"],
     // 0
 );
 
 const uboWrapperSurface = createUniformBufferObjectWrapper(
     gl,
-    blockIndex2,
-    blockSize2
-    // triangleShaderWrapper.program,
+    blockIndexSurfaceWithTriangle1,
+    blockSizeSurfaceWithTriangle1
+    // shaderWrapperTriangle1.program,
     // "Surface",
     // ["uColor"],
     // 1
@@ -157,30 +235,30 @@ const uboWrapperSurface = createUniformBufferObjectWrapper(
 
 
 // TODO: 第二引数は常にグローバルな位置になる？
-gl.bindBufferBase(gl.UNIFORM_BUFFER, blockIndex1, uboWrapperSettings.ubo);
+gl.bindBufferBase(gl.UNIFORM_BUFFER, blockIndexEngineWithTriangle1, uboWrapperEngine.ubo);
 // TODO: 第二引数は常にグローバルな位置になる？
-gl.bindBufferBase(gl.UNIFORM_BUFFER, blockIndex2, uboWrapperSurface.ubo);
+gl.bindBufferBase(gl.UNIFORM_BUFFER, blockIndexSurfaceWithTriangle1, uboWrapperSurface.ubo);
 
 
-const variableNames1 = ["uTime", "uOffset"];
-const variableNames2 = ["uColor"];
+const variableNamesEngine = ["uTime", "uOffset"];
+const variableNamesSurface = ["uColor"];
 
 const variableIndices1 = gl.getUniformIndices(
-    triangleShaderWrapper.program,
-    variableNames1
+    shaderWrapperTriangle1.program,
+    variableNamesEngine
 );
 
 const variableIndices2 = gl.getUniformIndices(
-    triangleShaderWrapper.program,
-    variableNames2
+    shaderWrapperTriangle1.program,
+    variableNamesSurface
 );
 
 
 // シェーダー内の uniform の offset(byte) を取得
 // wip: 2つめの uniform buffer の最初の要素は 0?
 // TODO: ずれるoffset量と型の関係が不明
-const variableOffsets1 = gl.getActiveUniforms(
-    triangleShaderWrapper.program,
+const variableOffsetsEngine = gl.getActiveUniforms(
+    shaderWrapperTriangle1.program,
     variableIndices1,
     gl.UNIFORM_OFFSET
 );
@@ -188,44 +266,44 @@ const variableOffsets1 = gl.getActiveUniforms(
 // シェーダー内の uniform の offset(byte) を取得
 // wip: 2つめの uniform buffer の最初の要素は 0?
 // TODO: ずれるoffset量と型の関係が不明
-const variableOffsets2 = gl.getActiveUniforms(
-    triangleShaderWrapper.program,
+const variableOffsetsSurface = gl.getActiveUniforms(
+    shaderWrapperTriangle1.program,
     variableIndices2,
     gl.UNIFORM_OFFSET
 );
 
-const variableInfo1 = variableNames1.map((name, i) => {
+const variableInfoEngine = variableNamesEngine.map((name, i) => {
     const index = variableIndices1[i];
-    const offset = variableOffsets1[i];
+    const offset = variableOffsetsEngine[i];
     console.log(`name: ${name}, index: ${index}, offset: ${offset}`);
     return {
         name,
         index: variableIndices1[i],
-        offset: variableOffsets1[i]
+        offset: variableOffsetsEngine[i]
     }
 });
 
-const variableInfo2 = variableNames2.map((name, i) => {
+const variableInfoSurface = variableNamesSurface.map((name, i) => {
     const index = variableIndices2[i];
-    const offset = variableOffsets2[i];
+    const offset = variableOffsetsSurface[i];
     console.log(`name: ${name}, index: ${index}, offset: ${offset}`);
     return {
         name,
         index: variableIndices2[i],
-        offset: variableOffsets2[i]
+        offset: variableOffsetsSurface[i]
     }
 });
 
 gl.uniformBlockBinding(
-    triangleShaderWrapper.program,
-    blockIndex1,
-    0 // webgl context で管理する global な index
+    shaderWrapperTriangle1.program,
+    blockIndexEngineWithTriangle1,
+    0 // binding point: webgl context で管理する global な index
 );
 
 gl.uniformBlockBinding(
-    triangleShaderWrapper.program,
-    blockIndex2,
-    1 // webgl context で管理する global な index
+    shaderWrapperTriangle1.program,
+    blockIndexSurfaceWithTriangle1,
+    1 // binding point: webgl context で管理する global な index
 );
 
 
@@ -234,39 +312,39 @@ const tick = (time) => {
     gl.clearDepth(1.0)
 
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    
+
     gl.viewport(0, 0, width, height);
 
-    triangleShaderWrapper.bindProgram();
+    shaderWrapperTriangle1.bindProgram();
 
-    triangleVaoWrapper.bind();
+    vaoWrapperTriangle1.bind();
 
-    uboWrapperSettings.bind();
+    uboWrapperEngine.bind();
     gl.bufferSubData(
         gl.UNIFORM_BUFFER,
-        variableInfo1.find(info => info.name === "uTime").offset,
+        variableInfoEngine.find(info => info.name === "uTime").offset,
         new Float32Array([time / 1000])
     );
-    // uboWrapperSettings.setData(
+    // uboWrapperEngine.setData(
     //     "uTime",
     //     new Float32Array([time / 1000])
     // );
     gl.bufferSubData(
         gl.UNIFORM_BUFFER,
-        variableInfo1.find(info => info.name === "uOffset").offset, 
+        variableInfoEngine.find(info => info.name === "uOffset").offset,
         new Float32Array([
             Math.cos(time / 1000) * .4,
             Math.sin(time / 1000) * .4
         ])
     );
-    // uboWrapperSettings.setData(
+    // uboWrapperEngine.setData(
     //     "uOffset",
     //     new Float32Array([
     //         Math.cos(time / 1000) * .4,
     //         Math.sin(time / 1000) * .4
     //     ])
     // );
-    uboWrapperSettings.unbind();
+    uboWrapperEngine.unbind();
 
     // uboWrapperSurface.bind();
     // uboWrapperSurface.setData(
@@ -285,29 +363,29 @@ const tick = (time) => {
 
     gl.bindBufferRange(
         // gl.UNIFORM_BUFFER,
-        // uboWrapperSettings.blockIndex,
-        // uboWrapperSettings.ubo,
+        // uboWrapperEngine.blockIndex,
+        // uboWrapperEngine.ubo,
         // 0,
-        // uboWrapperSettings.blockSize
+        // uboWrapperEngine.blockSize
         gl.UNIFORM_BUFFER,
-        blockIndex1,
-        uboWrapperSettings.ubo,
+        blockIndexEngineWithTriangle1,
+        uboWrapperEngine.ubo,
         0,
-        blockSize1
+        blockSizeEngineWithTriangle1
     )
     gl.bindBufferRange(
         gl.UNIFORM_BUFFER,
-        blockIndex2,
+        blockIndexSurfaceWithTriangle1,
         uboWrapperSurface.ubo,
         0,
-        blockSize2
+        blockSizeSurfaceWithTriangle1
     )
-    
+
     gl.drawArrays(gl.TRIANGLES, 0, 3);
 
-    triangleVaoWrapper.unbind();
+    vaoWrapperTriangle1.unbind();
 
-    triangleShaderWrapper.unbindProgram();
+    shaderWrapperTriangle1.unbindProgram();
 
     window.requestAnimationFrame(tick);
 }
