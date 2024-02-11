@@ -234,68 +234,70 @@ export function createVertexArrayObjectWrapper(gl, attributes, indicesData) {
 
 export function createUniformBufferObjectWrapper(
     gl,
-    program,
-    blockName,
-    variableNames,
-    bindingPoint
+    // program,
+    // blockName,
+    blockIndex,
+    blockSize,
+    // variableNames,
+    // bindingPoint
 ) {
-    console.log(`[createUniformBufferObjectWrapper] blockName: ${blockName}, variableNames: ${variableNames}`)
+    // console.log(`[createUniformBufferObjectWrapper] blockName: ${blockName}, variableNames: ${variableNames}`)
     
     const ubo = gl.createBuffer();
 
-    // シェーダー内の uniform buffer の index を取得
-    // 記述順によって決まる？
-    const blockIndex = gl.getUniformBlockIndex(
-        program,
-        blockName
-    );
+    // // シェーダー内の uniform buffer の index を取得
+    // // 記述順によって決まる？
+    // const blockIndex = gl.getUniformBlockIndex(
+    //     program,
+    //     blockName
+    // );
 
-    // シェーダー内の uniform block の byte数を取得。指定した block を参照する
-    const blockSize = gl.getActiveUniformBlockParameter(
-        program,
-        blockIndex,
-        gl.UNIFORM_BLOCK_DATA_SIZE
-    );
+    // // シェーダー内の uniform block の byte数を取得。指定した block を参照する
+    // const blockSize = gl.getActiveUniformBlockParameter(
+    //     program,
+    //     blockIndex,
+    //     gl.UNIFORM_BLOCK_DATA_SIZE
+    // );
 
     // TODO: 第二引数は常にグローバルな位置になる？
-    gl.bindBufferBase(gl.UNIFORM_BUFFER, blockIndex, ubo);
+    // gl.bindBufferBase(gl.UNIFORM_BUFFER, blockIndex, ubo);
     
-    console.log(`blockIndex: ${blockIndex}, blockSize: ${blockSize}`);
+    // console.log(`blockIndex: ${blockIndex}, blockSize: ${blockSize}`);
 
-    const variableIndices = gl.getUniformIndices(
-        program,
-        variableNames
-    );
-    
-    console.log(`variableIndices: ${variableIndices}`);
+    // const variableIndices = gl.getUniformIndices(
+    //     program,
+    //     variableNames
+    // );
+    // 
+    // console.log(`variableIndices: ${variableIndices}`);
 
-    // シェーダー内の uniform の offset(byte) を取得
-    // wip: 2つめの uniform buffer の最初の要素は 0?
-    // TODO: ずれるoffset量と型の関係が不明
-    const variableOffsets = gl.getActiveUniforms(
-        program,
-        variableIndices,
-        gl.UNIFORM_OFFSET
-    );
+    // // シェーダー内の uniform の offset(byte) を取得
+    // // wip: 2つめの uniform buffer の最初の要素は 0?
+    // // TODO: ずれるoffset量と型の関係が不明
+    // const variableOffsets = gl.getActiveUniforms(
+    //     program,
+    //     variableIndices,
+    //     gl.UNIFORM_OFFSET
+    // );
+    // 
+    // console.log(`variableOffsets: ${variableOffsets}`);
     
-    console.log(`variableOffsets: ${variableOffsets}`);
-    
-    const variableInfo = variableNames.map((name, i) => {
-        const index = variableIndices[i];
-        const offset = variableOffsets[i];
-        console.log(`name: ${name}, index: ${index}, offset: ${offset}`);
-        return {
-            name,
-            index: variableIndices[i],
-            offset: variableOffsets[i]
-        }
-    });
+    // const variableInfo = variableNames.map((name, i) => {
+    //     const index = variableIndices[i];
+    //     const offset = variableOffsets[i];
+    //     console.log(`name: ${name}, index: ${index}, offset: ${offset}`);
+    //     return {
+    //         name,
+    //         index: variableIndices[i],
+    //         offset: variableOffsets[i]
+    //     }
+    // });
 
-    gl.uniformBlockBinding(
-        program,
-        blockIndex,
-        bindingPoint // webgl context で管理する global な index
-    );
+    // gl.uniformBlockBinding(
+    //     program,
+    //     blockIndex,
+    //     bindingPoint // webgl context で管理する global な index
+    // );
     
     const bind = () => {
         gl.bindBuffer(gl.UNIFORM_BUFFER, ubo);
