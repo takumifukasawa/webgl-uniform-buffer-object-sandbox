@@ -185,6 +185,9 @@ const vaoWrapperTriangle2 = createVertexArrayObjectWrapper(gl,
 const blockNameEngine = "Engine";
 const blockNameSurface = "Surface";
 
+const bindingPointEngine = 0;
+const bindingPointSurface = 1;
+
 // シェーダー内の uniform buffer の index を取得
 // 記述順によって決まる？
 const blockIndexEngineWithTriangle1 = gl.getUniformBlockIndex(
@@ -258,7 +261,7 @@ console.log(`blockSizeSurfaceWithTriangle2: ${blockSizeSurfaceWithTriangle2}`);
 
 const uboWrapperEngine = createUniformBufferObjectWrapper(
     gl,
-    blockIndexEngineWithTriangle1,
+    // blockIndexEngineWithTriangle1,
     blockSizeEngineWithTriangle1
     // shaderWrapperTriangle1.program,
     // "Engine",
@@ -268,7 +271,7 @@ const uboWrapperEngine = createUniformBufferObjectWrapper(
 
 const uboWrapperSurface = createUniformBufferObjectWrapper(
     gl,
-    blockIndexSurfaceWithTriangle1,
+    // blockIndexSurfaceWithTriangle1,
     blockSizeSurfaceWithTriangle1
     // shaderWrapperTriangle1.program,
     // "Surface",
@@ -278,9 +281,9 @@ const uboWrapperSurface = createUniformBufferObjectWrapper(
 
 
 // TODO: 第二引数は常にグローバルな位置になる？
-gl.bindBufferBase(gl.UNIFORM_BUFFER, blockIndexEngineWithTriangle1, uboWrapperEngine.ubo);
+gl.bindBufferBase(gl.UNIFORM_BUFFER, bindingPointEngine, uboWrapperEngine.ubo);
 // TODO: 第二引数は常にグローバルな位置になる？
-gl.bindBufferBase(gl.UNIFORM_BUFFER, blockIndexSurfaceWithTriangle1, uboWrapperSurface.ubo);
+gl.bindBufferBase(gl.UNIFORM_BUFFER, bindingPointSurface, uboWrapperSurface.ubo);
 
 
 const variableNamesEngine = ["uTime", "uOffset"];
