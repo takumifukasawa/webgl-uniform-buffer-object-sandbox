@@ -36,12 +36,12 @@ out vec3 vColor;
 //     float time;
 // } uData;
 
-uniform Engine {
+layout (std140) uniform Engine {
     float uTime;
-    vec2 uOffset;
+    vec3 uOffset;
 };
 
-uniform Surface {
+layout (std140) uniform Surface {
     vec3 uColor;
 };
 
@@ -64,7 +64,7 @@ in vec3 vColor;
 
 out vec4 color;
 
-uniform Surface {
+layout (std140) uniform Surface {
     vec3 uColor;
 };
 
@@ -86,14 +86,13 @@ out vec3 vColor;
 //     float time;
 // } uData;
 
-uniform Surface {
+layout (std140) uniform Surface {
     vec3 uColor;
 };
 
-
-uniform Engine {
+layout (std140) uniform Engine {
     float uTime;
-    vec2 uOffset;
+    vec3 uOffset;
 };
 
 
@@ -443,11 +442,12 @@ const tick = (time) => {
     );
     gl.bufferSubData(
         gl.UNIFORM_BUFFER,
-        SIZE_OF_FLOAT * 2, // TODO: なんで x2?
+        16,
         // variableInfoEngineWithTriangle1.find(info => info.name === "uOffset").offset,
         new Float32Array([
             0,
-            Math.sin(time / 1000) * .4
+            Math.sin(time / 1000) * .4,
+            0
         ])
     );
     uboWrapperEngine.unbind();
