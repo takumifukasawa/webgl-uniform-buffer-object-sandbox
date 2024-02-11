@@ -12,8 +12,12 @@ import {
 
 const canvas = document.createElement('canvas');
 
-canvas.width = 512;
-canvas.height = 512;
+const width = 512;
+const height = 512;
+
+canvas.width = width;
+canvas.height = height;
+
 document.getElementById('js-wrapper').appendChild(canvas);
 
 const gl = canvas.getContext('webgl2');
@@ -37,11 +41,9 @@ uniform Settings {
     vec2 uOffset;
 };
 
-uniform Data {
-    float uData;
+uniform Surface {
+    vec3 uColor;
 };
-
-uniform float uHoge;
 
 void main() {
     vColor = color;
@@ -55,18 +57,23 @@ void main() {
 
 const fragmentShaderText = `#version 300 es
 
-precision mediump float;
+precision highp float;
 
 in vec3 vColor;
 
 out vec4 color;
 
+uniform Surface {
+    vec3 uColor;
+};
+
 void main() {
-    color = vec4(vColor, 1.0);
+    // color = vec4(vColor, 1.0);
+    color = vec4(uColor, 1.0);
 }
 `;
 
-const shaderWrapper = createShaderWrapper(gl, vertexShaderText, fragmentShaderText);
+const shaderWrapper1 = createShaderWrapper(gl, vertexShaderText, fragmentShaderText);
 
 const vaoWrapper = createVertexArrayObjectWrapper(gl,
     [
@@ -95,38 +102,83 @@ const vaoWrapper = createVertexArrayObjectWrapper(gl,
     ]
 );
 
-const uboWrapper = createUniformBufferObjectWrapper(
+const uboWrapperSettings = createUniformBufferObjectWrapper(
     gl,
-    shaderWrapper.program,
+    shaderWrapper1.program,
     "Settings",
-    ["uTime", "uOffset"]
+    ["uTime", "uOffset"],
+    0
+);
+
+const uboWrapperSurface = createUniformBufferObjectWrapper(
+    gl,
+    shaderWrapper1.program,
+    "Surface",
+    ["uColor"],
+    1
 );
 
 const tick = (time) => {
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
+    gl.clearDepth(1.0)
 
-    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    
+    gl.viewport(0, 0, width, height);
 
-    shaderWrapper.bindProgram();
+    shaderWrapper1.bindProgram();
 
     vaoWrapper.bind();
 
-    uboWrapper.bind();
+    uboWrapperSettings.bind();
+    uboWrapperSettings.setData(
+        "uTime",
+        new Float32Array([time / 1000])
+    );
+    uboWrapperSettings.setData(
+        "uOffset",
+        new Float32Array([
+            Math.cos(time / 1000) * .4,
+            Math.sin(time / 1000) * .4
+        ])
+    );
+    uboWrapperSettings.unbind();
 
-    uboWrapper.setData("uTime", new Float32Array([time / 1000]));
-    uboWrapper.setData("uOffset", new Float32Array([
-        Math.cos(time / 1000) * .4,
-        Math.sin(time / 1000) * .4
-    ]));
+    uboWrapperSurface.bind();
+    uboWrapperSurface.setData(
+        "uColor",
+        new Float32Array([
+            // .6 + Math.sin(time * 1.2) * .4,
+            // .6 + Math.cos(time * 1.3) * .4,
+            // .6 + Math.sin(time * 1.4) * .4
+            0,
+            1,
+            0
+        ])
+    );
+    uboWrapperSurface.unbind();
+
+
+    gl.bindBufferRange(
+        gl.UNIFORM_BUFFER,
+        uboWrapperSettings.blockIndex,
+        uboWrapperSettings.ubo,
+        0,
+        uboWrapperSettings.blockSize
+    )
+    gl.bindBufferRange(
+        gl.UNIFORM_BUFFER,
+        uboWrapperSurface.blockIndex,
+        uboWrapperSurface.ubo,
+        0,
+        uboWrapperSurface.blockSize
+    )
     
-    // draw する前に unbindして OK 
-    uboWrapper.unbind();
-
     gl.drawArrays(gl.TRIANGLES, 0, 3);
 
     vaoWrapper.unbind();
 
-    shaderWrapper.unbindProgram();
+    shaderWrapper1.unbindProgram();
 
     window.requestAnimationFrame(tick);
 }

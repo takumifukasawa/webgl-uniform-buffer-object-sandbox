@@ -236,12 +236,15 @@ export function createUniformBufferObjectWrapper(
     gl,
     program,
     blockName,
-    variableNames
+    variableNames,
+    bindingPoint
 ) {
+    console.log(`[createUniformBufferObjectWrapper] blockName: ${blockName}, variableNames: ${variableNames}`)
+    
     const ubo = gl.createBuffer();
 
     // シェーダー内の uniform buffer の index を取得
-    // 記述順によって決まることに注意
+    // 記述順によって決まる？
     const blockIndex = gl.getUniformBlockIndex(
         program,
         blockName
@@ -254,16 +257,17 @@ export function createUniformBufferObjectWrapper(
         gl.UNIFORM_BLOCK_DATA_SIZE
     );
 
+    // TODO: 第二引数は常にグローバルな位置になる？
     gl.bindBufferBase(gl.UNIFORM_BUFFER, blockIndex, ubo);
     
-    console.log(`[blockIndex] ${blockIndex}, [blockSize] ${blockSize}`);
+    console.log(`blockIndex: ${blockIndex}, blockSize: ${blockSize}`);
 
     const variableIndices = gl.getUniformIndices(
         program,
         variableNames
     );
     
-    console.log(`[variableIndices] ${variableIndices}`);
+    console.log(`variableIndices: ${variableIndices}`);
 
     // シェーダー内の uniform の offset(byte) を取得
     // wip: 2つめの uniform buffer の最初の要素は 0?
@@ -274,12 +278,12 @@ export function createUniformBufferObjectWrapper(
         gl.UNIFORM_OFFSET
     );
     
-    console.log(`[variableOffsets] ${variableOffsets}`);
+    console.log(`variableOffsets: ${variableOffsets}`);
     
     const variableInfo = variableNames.map((name, i) => {
         const index = variableIndices[i];
         const offset = variableOffsets[i];
-        console.log(`[uboWrapper] name: ${name}, index: ${index}, offset: ${offset}`);
+        console.log(`name: ${name}, index: ${index}, offset: ${offset}`);
         return {
             name,
             index: variableIndices[i],
@@ -287,11 +291,10 @@ export function createUniformBufferObjectWrapper(
         }
     });
 
-    // TODO: 第三引数の意味がよくわかってない
     gl.uniformBlockBinding(
         program,
         blockIndex,
-        0
+        bindingPoint // webgl context で管理する global な index
     );
     
     const bind = () => {
@@ -303,8 +306,13 @@ export function createUniformBufferObjectWrapper(
     }
     
     const setData = (name, data) => {
-        const offset = variableInfo.find(info => info.name === name).offset;
-        gl.bufferSubData(gl.UNIFORM_BUFFER, offset, data);
+        const info = variableInfo.find(info => info.name === name);
+        if(!info) {
+            console.error(`[createUniformBufferObjectWrapper] setData: not found variable name: ${name}`);
+            return;
+        }
+        //gl.bufferSubData(gl.UNIFORM_BUFFER, info.offset, data);
+        gl.bufferSubData(gl.UNIFORM_BUFFER, info.offset, data, 0);
     }
 
     // const bindBufferBase = (index) => {
@@ -340,7 +348,9 @@ export function createUniformBufferObjectWrapper(
         ubo,
         bind,
         unbind,
-        setData
+        setData,
+        blockIndex,
+        blockSize
         // bindBufferBase
     };
 }
