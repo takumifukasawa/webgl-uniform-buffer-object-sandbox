@@ -237,9 +237,9 @@ export function createUniformBufferObjectWrapper(
     // program,
     // blockName,
     // blockIndex,
-    // dataSize,
+    dataSize,
     // variableNames,
-    // bindingPoint
+    bindingPoint
 ) {
     // console.log(`[createUniformBufferObjectWrapper] blockName: ${blockName}, variableNames: ${variableNames}`)
     
@@ -337,9 +337,11 @@ export function createUniformBufferObjectWrapper(
     // });
    
     // 必要なbyte数を確保しておく 
-    // gl.bufferData(gl.UNIFORM_BUFFER, dataSize, gl.DYNAMIC_DRAW);
-
+    gl.bufferData(gl.UNIFORM_BUFFER, dataSize, gl.DYNAMIC_DRAW);
+    
     unbind();
+
+    gl.bindBufferBase(gl.UNIFORM_BUFFER, bindingPoint, ubo);
 
     // if (blockIndex > -1) {
     //     // gl.bindBufferBase(gl.UNIFORM_BUFFER, blockIndex, ubo);

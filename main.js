@@ -38,7 +38,6 @@ out vec3 vColor;
 
 layout (std140) uniform Engine {
     float uTime;
-    float Hoge;
     vec3 uTranslate;
     vec3 uScale;
 };
@@ -89,14 +88,14 @@ out vec3 vColor;
 //     float time;
 // } uData;
 
-layout (std140) uniform Surface {
-    vec3 uColor;
-};
-
 layout (std140) uniform Engine {
     float uTime;
     vec3 uTranslate;
     vec3 uScale;
+};
+
+layout (std140) uniform Surface {
+    vec3 uColor;
 };
 
 
@@ -265,6 +264,8 @@ console.log(`blockSizeSurfaceWithTriangle2: ${blockSizeSurfaceWithTriangle2}`);
 
 const uboWrapperEngine = createUniformBufferObjectWrapper(
     gl,
+    blockSizeEngineWithTriangle1, // 1つ目のシェーダーをもとにblocksizeを渡す
+    bindingPointEngine // 1つ目のシェーダーをもとにbindingPointを渡す
     // blockIndexEngineWithTriangle1,
     // blockSizeEngineWithTriangle1
     // shaderWrapperTriangle1.program,
@@ -272,13 +273,15 @@ const uboWrapperEngine = createUniformBufferObjectWrapper(
     // ["uTime", "uTranslate"],
     // 0
 );
-uboWrapperEngine.bind();
-gl.bufferData(gl.UNIFORM_BUFFER, new Float32Array(4 * (1 + 4 + 4)), gl.DYNAMIC_DRAW);
-gl.bindBufferBase(gl.UNIFORM_BUFFER, bindingPointEngine, uboWrapperEngine.ubo);
-uboWrapperEngine.unbind();
+// uboWrapperEngine.bind();
+// // gl.bufferData(gl.UNIFORM_BUFFER, new Float32Array(4 * (1 + 4 + 4)), gl.DYNAMIC_DRAW);
+// uboWrapperEngine.unbind();
+// // gl.bindBufferBase(gl.UNIFORM_BUFFER, bindingPointEngine, uboWrapperEngine.ubo);
 
 const uboWrapperSurface = createUniformBufferObjectWrapper(
     gl,
+    blockSizeSurfaceWithTriangle1, // 1つ目のシェーダーをもとにblocksizeを渡す
+    bindingPointSurface // 1つ目のシェーダーをもとにbindingPointを渡す
     // blockIndexSurfaceWithTriangle1,
     // blockSizeSurfaceWithTriangle1
     // shaderWrapperTriangle1.program,
@@ -286,12 +289,12 @@ const uboWrapperSurface = createUniformBufferObjectWrapper(
     // ["uColor"],
     // 1
 );
-uboWrapperSurface.bind();
-gl.bufferData(gl.UNIFORM_BUFFER, new Float32Array(4 * 1), gl.DYNAMIC_DRAW);
-gl.bindBufferBase(gl.UNIFORM_BUFFER, bindingPointSurface, uboWrapperSurface.ubo);
-uboWrapperSurface.unbind();
+// uboWrapperSurface.bind();
+// // gl.bufferData(gl.UNIFORM_BUFFER, new Float32Array(4 * 1), gl.DYNAMIC_DRAW);
+// uboWrapperSurface.unbind();
+// // gl.bindBufferBase(gl.UNIFORM_BUFFER, bindingPointSurface, uboWrapperSurface.ubo);
 
-const variableNamesEngine = ["uTime", "Hoge", "uTranslate", "uScale"];
+const variableNamesEngine = ["uTime", "uTranslate", "uScale"];
 const variableNamesSurface = ["uColor"];
 
 const variableIndicesEngineWithTriangle1 = gl.getUniformIndices(
@@ -364,7 +367,7 @@ const variableInfoEngineWithTriangle1 = variableNamesEngine.map((name, i) => {
         offset: variableOffsetsEngineWithTriangle1[i]
     }
 });
- 
+
 const variableInfoSurfaceWithTriangle1 = variableNamesSurface.map((name, i) => {
     const index = variableIndicesSurfaceWithTriangle1[i];
     const offset = variableOffsetsSurfaceWithTriangle1[i];
@@ -413,13 +416,13 @@ gl.uniformBlockBinding(
 gl.uniformBlockBinding(
     shaderWrapperTriangle2.program,
     blockIndexEngineWithTriangle2,
-    bindingPointSurface
+    bindingPointEngine
 );
 
 gl.uniformBlockBinding(
     shaderWrapperTriangle2.program,
     blockIndexSurfaceWithTriangle2,
-    bindingPointEngine
+    bindingPointSurface
 );
 
 const SIZE_OF_FLOAT = 4;
@@ -443,7 +446,8 @@ const tick = (time) => {
         gl.UNIFORM_BUFFER,
         // 0,
         variableInfoEngineWithTriangle1.find(info => info.name === "uTime").offset,
-        new Float32Array([time / 1000])
+        new Float32Array([time / 1000]),
+        0
     );
     gl.bufferSubData(
         gl.UNIFORM_BUFFER,
@@ -453,7 +457,8 @@ const tick = (time) => {
             0,
             Math.sin(time / 1000) * .4,
             0
-        ])
+        ]),
+        0
     );
     gl.bufferSubData(
         gl.UNIFORM_BUFFER,
@@ -463,7 +468,8 @@ const tick = (time) => {
             .5,
             .5,
             .5
-        ])
+        ]),
+        0
     );
     uboWrapperEngine.unbind();
 
@@ -479,7 +485,8 @@ const tick = (time) => {
             0,
             1,
             0
-        ])
+        ]),
+        0
     );
     uboWrapperSurface.unbind();
 
@@ -524,20 +531,22 @@ const tick = (time) => {
     // );
     // uboWrapperSurface.unbind();
 
-    gl.bindBufferRange(
-        gl.UNIFORM_BUFFER,
-        blockIndexEngineWithTriangle1,
-        uboWrapperEngine.ubo,
-        0,
-        blockSizeEngineWithTriangle1
-    )
-    gl.bindBufferRange(
-        gl.UNIFORM_BUFFER,
-        blockIndexSurfaceWithTriangle1,
-        uboWrapperSurface.ubo,
-        0,
-        blockSizeSurfaceWithTriangle1
-    )
+    // gl.bindBufferRange(
+    //     gl.UNIFORM_BUFFER,
+    //     blockIndexEngineWithTriangle1,
+    //     uboWrapperEngine.ubo,
+    //     0,
+    //     blockSizeEngineWithTriangle1
+    // )
+    // gl.bindBufferRange(
+    //     gl.UNIFORM_BUFFER,
+    //     blockIndexSurfaceWithTriangle1,
+    //     uboWrapperSurface.ubo,
+    //     0,
+    //     blockSizeSurfaceWithTriangle1
+    // )
+    // gl.bindBufferBase(gl.UNIFORM_BUFFER, bindingPointEngine, uboWrapperEngine.ubo);
+    // gl.bindBufferBase(gl.UNIFORM_BUFFER, bindingPointSurface, uboWrapperSurface.ubo);
 
     gl.drawArrays(gl.TRIANGLES, 0, 3);
 
@@ -584,20 +593,22 @@ const tick = (time) => {
     // );
     // uboWrapperSurface.unbind();
 
-    gl.bindBufferRange(
-        gl.UNIFORM_BUFFER,
-        blockIndexEngineWithTriangle2,
-        uboWrapperEngine.ubo,
-        0,
-        blockSizeEngineWithTriangle2
-    )
-    gl.bindBufferRange(
-        gl.UNIFORM_BUFFER,
-        blockIndexSurfaceWithTriangle2,
-        uboWrapperSurface.ubo,
-        0,
-        blockSizeSurfaceWithTriangle2
-    )
+    // gl.bindBufferRange(
+    //     gl.UNIFORM_BUFFER,
+    //     blockIndexEngineWithTriangle2,
+    //     uboWrapperEngine.ubo,
+    //     0,
+    //     blockSizeEngineWithTriangle2
+    // )
+    // gl.bindBufferRange(
+    //     gl.UNIFORM_BUFFER,
+    //     blockIndexSurfaceWithTriangle2,
+    //     uboWrapperSurface.ubo,
+    //     0,
+    //     blockSizeSurfaceWithTriangle2
+    // )
+    // gl.bindBufferBase(gl.UNIFORM_BUFFER, bindingPointEngine, uboWrapperEngine.ubo);
+    // gl.bindBufferBase(gl.UNIFORM_BUFFER, bindingPointSurface, uboWrapperSurface.ubo);
 
     gl.drawArrays(gl.TRIANGLES, 0, 3);
 
