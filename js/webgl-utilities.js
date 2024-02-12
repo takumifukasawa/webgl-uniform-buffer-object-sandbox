@@ -341,6 +341,7 @@ export function createUniformBufferObjectWrapper(
     
     unbind();
 
+    // uboとbindingPointを関連付ける
     gl.bindBufferBase(gl.UNIFORM_BUFFER, bindingPoint, ubo);
 
     // if (blockIndex > -1) {
