@@ -89,24 +89,24 @@ out vec3 vColor;
 // } uData;
 
 // NOTE: あえて surface, engine の順にしてみる
-layout (std140) uniform Surface {
-    vec3 uColor;
-};
+// layout (std140) uniform Surface {
+//     vec3 uColor;
+// };
 
-layout (std140) uniform Engine {
-    float uTime;
-    vec3 uTranslate;
-    vec3 uScale;
-};
+// layout (std140) uniform Engine {
+//     float uTime;
+//     vec3 uTranslate;
+//     vec3 uScale;
+// };
 
 
 void main() {
     vColor = color;
     vec3 p = position;
-    // p.xy *= (.8 + sin(Data.time * 4.) * .2);
-    p.xy *= uScale.xy;
-    p.xy *= (.8 + sin(uTime * 2.) * .2);
-    p.xy += uTranslate.xy;
+    // // p.xy *= (.8 + sin(Data.time * 4.) * .2);
+    // p.xy *= uScale.xy;
+    // p.xy *= (.8 + sin(uTime * 2.) * .2);
+    // p.xy += uTranslate.xy;
     p.x += .25;
     gl_Position = vec4(p, 1.0);
 }
@@ -125,8 +125,8 @@ uniform Surface {
 };
 
 void main() {
-    // color = vec4(vColor, 1.0);
-    color = vec4(uColor, 1.0);
+    color = vec4(vColor, 1.0);
+    // color = vec4(uColor, 1.0);
 }
 `;
 
@@ -201,19 +201,18 @@ const blockIndexEngineWithTriangle1 = gl.getUniformBlockIndex(
     blockNameEngine
 );
 
-// シェーダー内の uniform buffer の index を取得
-// 記述順によって決まる？
-const blockIndexSurfaceWithTriangle1 = gl.getUniformBlockIndex(
-    shaderWrapperTriangle1.program,
-    blockNameSurface
-);
-
-
 // シェーダー内の uniform block の byte数を取得。指定した block を参照する
 const blockSizeEngineWithTriangle1 = gl.getActiveUniformBlockParameter(
     shaderWrapperTriangle1.program,
     blockIndexEngineWithTriangle1,
     gl.UNIFORM_BLOCK_DATA_SIZE
+);
+
+// シェーダー内の uniform buffer の index を取得
+// 記述順によって決まる？
+const blockIndexSurfaceWithTriangle1 = gl.getUniformBlockIndex(
+    shaderWrapperTriangle1.program,
+    blockNameSurface
 );
 
 // シェーダー内の uniform block の byte数を取得。指定した block を参照する
@@ -224,17 +223,16 @@ const blockSizeSurfaceWithTriangle1 = gl.getActiveUniformBlockParameter(
 );
 
 console.log(`blockIndexEngineWithTriangle1: ${blockIndexEngineWithTriangle1}`);
-console.log(`blockIndexSurfaceWithTriangle1: ${blockIndexSurfaceWithTriangle1}`);
 console.log(`blockSizeEngineWithTriangle1: ${blockSizeEngineWithTriangle1}`);
+console.log(`blockIndexSurfaceWithTriangle1: ${blockIndexSurfaceWithTriangle1}`);
 console.log(`blockSizeSurfaceWithTriangle1: ${blockSizeSurfaceWithTriangle1}`);
 
-// シェーダー内の uniform buffer の index を取得
-// 記述順によって決まる？
-const blockIndexEngineWithTriangle2 = gl.getUniformBlockIndex(
-    shaderWrapperTriangle2.program,
-    blockNameEngine
-);
-
+// // シェーダー内の uniform buffer の index を取得
+// // 記述順によって決まる？
+// const blockIndexEngineWithTriangle2 = gl.getUniformBlockIndex(
+//     shaderWrapperTriangle2.program,
+//     blockNameEngine
+// );
 
 // シェーダー内の uniform buffer の index を取得
 // 記述順によって決まる？
@@ -243,12 +241,12 @@ const blockIndexSurfaceWithTriangle2 = gl.getUniformBlockIndex(
     blockNameSurface
 );
 
-// シェーダー内の uniform block の byte数を取得。指定した block を参照する
-const blockSizeEngineWithTriangle2 = gl.getActiveUniformBlockParameter(
-    shaderWrapperTriangle2.program,
-    blockIndexEngineWithTriangle2,
-    gl.UNIFORM_BLOCK_DATA_SIZE
-);
+// // シェーダー内の uniform block の byte数を取得。指定した block を参照する
+// const blockSizeEngineWithTriangle2 = gl.getActiveUniformBlockParameter(
+//     shaderWrapperTriangle2.program,
+//     blockIndexEngineWithTriangle2,
+//     gl.UNIFORM_BLOCK_DATA_SIZE
+// );
 
 // シェーダー内の uniform block の byte数を取得。指定した block を参照する
 const blockSizeSurfaceWithTriangle2 = gl.getActiveUniformBlockParameter(
@@ -257,9 +255,9 @@ const blockSizeSurfaceWithTriangle2 = gl.getActiveUniformBlockParameter(
     gl.UNIFORM_BLOCK_DATA_SIZE
 );
 
-console.log(`blockIndexEngineWithTriangle2: ${blockIndexEngineWithTriangle2}`);
+// console.log(`blockIndexEngineWithTriangle2: ${blockIndexEngineWithTriangle2}`);
 console.log(`blockIndexSurfaceWithTriangle2: ${blockIndexSurfaceWithTriangle2}`);
-console.log(`blockSizeEngineWithTriangle2: ${blockSizeEngineWithTriangle2}`);
+// console.log(`blockSizeEngineWithTriangle2: ${blockSizeEngineWithTriangle2}`);
 console.log(`blockSizeSurfaceWithTriangle2: ${blockSizeSurfaceWithTriangle2}`);
 
 const uboWrapperEngine = createUniformBufferObjectWrapper(
@@ -368,16 +366,16 @@ gl.uniformBlockBinding(
     bindingPointSurface
 );
 
-gl.uniformBlockBinding(
-    shaderWrapperTriangle2.program,
-    blockIndexEngineWithTriangle2,
-    bindingPointSurface
-);
+// gl.uniformBlockBinding(
+//     shaderWrapperTriangle2.program,
+//     blockIndexEngineWithTriangle2,
+//     bindingPointEngine
+// );
 
 gl.uniformBlockBinding(
     shaderWrapperTriangle2.program,
     blockIndexSurfaceWithTriangle2,
-    bindingPointEngine
+    bindingPointSurface
 );
 
 const tick = (time) => {
@@ -478,13 +476,13 @@ const tick = (time) => {
 
     vaoWrapperTriangle2.bind();
 
-    gl.bindBufferRange(
-        gl.UNIFORM_BUFFER,
-        blockIndexEngineWithTriangle2,
-        uboWrapperEngine.ubo,
-        0,
-        blockSizeEngineWithTriangle2
-    )
+    // gl.bindBufferRange(
+    //     gl.UNIFORM_BUFFER,
+    //     blockIndexEngineWithTriangle2,
+    //     uboWrapperEngine.ubo,
+    //     0,
+    //     blockSizeEngineWithTriangle2
+    // )
     gl.bindBufferRange(
         gl.UNIFORM_BUFFER,
         blockIndexSurfaceWithTriangle2,
