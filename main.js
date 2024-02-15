@@ -447,20 +447,20 @@ const tick = (time) => {
 
     vaoWrapperTriangle1.bind();
 
-    gl.bindBufferRange(
-        gl.UNIFORM_BUFFER,
-        blockIndexEngineWithTriangle1,
-        uboWrapperEngine.ubo,
-        0,
-        blockSizeEngineWithTriangle1
-    )
-    gl.bindBufferRange(
-        gl.UNIFORM_BUFFER,
-        blockIndexSurfaceWithTriangle1,
-        uboWrapperSurface.ubo,
-        0,
-        blockSizeSurfaceWithTriangle1
-    )
+    // gl.bindBufferRange(
+    //     gl.UNIFORM_BUFFER,
+    //     bindingPointEngine,
+    //     uboWrapperEngine.ubo,
+    //     0,
+    //     blockSizeEngineWithTriangle1
+    // )
+    // gl.bindBufferRange(
+    //     gl.UNIFORM_BUFFER,
+    //     bindingPointSurface,
+    //     uboWrapperSurface.ubo,
+    //     0,
+    //     blockSizeSurfaceWithTriangle1
+    // )
 
     gl.drawArrays(gl.TRIANGLES, 0, 3);
 
@@ -476,20 +476,20 @@ const tick = (time) => {
 
     vaoWrapperTriangle2.bind();
 
+    // // gl.bindBufferRange(
+    // //     gl.UNIFORM_BUFFER,
+    // //     blockIndexEngineWithTriangle2,
+    // //     uboWrapperEngine.ubo,
+    // //     0,
+    // //     blockSizeEngineWithTriangle2
+    // // )
     // gl.bindBufferRange(
     //     gl.UNIFORM_BUFFER,
-    //     blockIndexEngineWithTriangle2,
-    //     uboWrapperEngine.ubo,
+    //     bindingPointSurface,
+    //     uboWrapperSurface.ubo,
     //     0,
-    //     blockSizeEngineWithTriangle2
+    //     blockSizeSurfaceWithTriangle2
     // )
-    gl.bindBufferRange(
-        gl.UNIFORM_BUFFER,
-        blockIndexSurfaceWithTriangle2,
-        uboWrapperSurface.ubo,
-        0,
-        blockSizeSurfaceWithTriangle2
-    )
 
     gl.drawArrays(gl.TRIANGLES, 0, 3);
 
